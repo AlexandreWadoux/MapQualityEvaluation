@@ -242,7 +242,7 @@ dev.off()
 ########################################
 # the sun diagram
 
-source('./R_sun_function.R')
+source('./R_solar_function.R')
 source('./map_quality_indices.R')
 models <- list(y_rev = grid$y_rev,
                y_posError = grid$y_posError,
@@ -261,7 +261,7 @@ obser <- grid$y
 model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
 colorval <- model_MEC
 
-jpeg(file= './Simulated_case_solar.jpg',family="Palatino", width = 25, height = 21, units = "cm", res = 1200)             
+jpeg(file= './Simulated_case_solar.jpg',family="Palatino", width = 25, height = 21, units = "cm", res = 3000)             
 gg_solar(mods = models, 
          obs = obser,
          colorval = colorval,
@@ -297,7 +297,7 @@ obser <- grid$y
 model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
 colorval <- model_MEC
 
-jpeg(file= './Simulated_case_target.jpg', family="Palatino", width = 26, height = 24, units = "cm", res = 1200)             
+jpeg(file= './Simulated_case_target.jpg', family="Palatino", width = 26, height = 24, units = "cm", res = 3000)             
 gg_target(mods = models, 
           obs = obser,
           colorval = colorval,
@@ -332,7 +332,7 @@ names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative
                    'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
 obser <- grid$y
 
-jpeg(file= './Simulated_case_taylor.jpg',family="Palatino", width = 24, height = 14, units = "cm", res = 1200)            
+jpeg(file= './Simulated_case_taylor.jpg',family="Palatino", width = 24, height = 14, units = "cm", res = 3000)            
 gg_taylor(mods = models, 
           obs = obser, 
           label = TRUE)
