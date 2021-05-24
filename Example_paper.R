@@ -1,11 +1,54 @@
-########################################
-########################################
-#simulate field
-# Gaussian process with mean zero and exponential covariance function that has sill of 5 and a range of 10
-# add a linear spatial trend using the coordinates
-# add a multiplicative term 
 
-#define discretisation grid: AW: for the paper I used 120, not 70
+############
+############  load libraries
+############
+library(ggplot2)
+library(ranger)
+library(rpart)
+library(DescTools)
+library(sp)
+library(raster)
+library(rasterVis)
+library(viridis)
+library(RColorBrewer)
+library(tdr)
+library(ggrepel)
+library(magrittr)
+library(latex2exp)
+library(ggforce)
+
+############
+############  Initialize script
+############
+
+root_dir <- dirname(rstudioapi::getActiveDocumentContext()$path)
+setwd(root_dir)
+
+############
+############ Simulate fields 
+############
+# Reference field 
+## grid of size 50*50 cells
+## we simulate a realisation of a map composed of a linear spatial trend superimposed on a Gaussian random field
+## trend has an intercept of 5 and slope parameter of 0.1 for the x-axis and 0.05 for the y-axis
+## the Gaussian random field has a mean of zero and a covariance given by C(h) = 5 exp(-h/10), where h is the lag distance
+## this map is multiplied by a factor of 0.3 to obtain the ultimate reference map
+
+# Nine modifications of the reference map are created to give nine maps with predictions: 
+## 1- a map positionally shifted by 20 units in the x-direction and the y-direction,
+## 2- a map where the x- and y-coordinates are reversed, 
+## 3- a map containing the mean value of the reference map at each coordinate, 
+## 4- a smoothed map obtained by a moving average window of size 5*5 units,  
+## 5- a negatively biased map obtained by adding a value of 1 to the reference map, 
+## 6- a map predicted by a random forest model with a single tree and default parameters from the R package ranger using the reference map as calibration data and the x- and y-coordinates as predictors,
+## 7- a map predicted by a single regression tree with default parameters from the R package rpart using the reference map as calibration data and the x- and y-coordinates as predictors, 
+## 8- a map of the upper quartile, made by assigning the mean of the reference map to the values lower than the upper quartile and value of the reference map otherwise,
+## 9- a map of the lower quartile, made by assigning the mean of the reference map to the values higher than the lower quartile and the value of the reference map otherwise.
+
+########################################
+########################################
+# Reference field 
+#define discretisation grid: AW: for the paper I used 120, not 70 (we remove 20 after, so 50 or 100)
 grid <- expand.grid(x1 = seq(0, 70, length.out = 70),
                     x2 = seq(0, 70, length.out = 70))
 
@@ -43,10 +86,11 @@ grid$y <- grid$sim*0.3
 #add residuals to trend
 grid <- grid[,c('x1', 'x2', 'y')]
 
-library(ggplot2)
+# plot reference map
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
+# mean and variance of the reference map
 mean(grid$y)
 var(grid$y)
 
@@ -62,15 +106,13 @@ grid <- na.omit(grid)
 gridL$x1[gridL$x1<20] <- NA
 gridL$x2[gridL$x2<20] <- NA
 gridL <- na.omit(gridL)
-library(ggplot2)
+grid$y_posError <- gridL$y
 ggplot(gridL) + geom_tile(aes(x1, x2, fill = y)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
-grid$y_posError <- gridL$y
-
 ########################################
 ########################################
-# 1- reverse simulated field
+# 2- reverse simulated field
 
 grid$y_rev <- rev(grid$y)
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_rev)) +
@@ -78,28 +120,25 @@ ggplot(grid) + geom_tile(aes(x1, x2, fill = y_rev)) +
 
 ########################################
 ########################################
-# 2- average simulated field
+# 3- average simulated field
 
 grid$y_mean <- mean(grid$y)
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_mean)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
-
 ########################################
 ########################################
-# 3- smoothed simulated field
+# 4- smoothed simulated field
 
 # we use a moving window average
 ## convert to raster
-library(sp)
 coordinates(grid) <- ~x1+x2
 gridded(grid) <- TRUE
-library(raster)
 r <- stack(grid)
 plot(r)
 
 # make the smoothing
-r$y_smoothed <- focal(r$y, w = matrix(1, nc=5, nr=5), fun=mean, na.rm=T, pad = T)
+r$y_smoothed <- focal(r$y, w = matrix(1, nc = 5, nr = 5), fun = mean, na.rm = T, pad = T)
 plot(r$y_smoothed)
 
 # convert raster back to data.frame
@@ -111,8 +150,7 @@ ggplot(grid) + geom_tile(aes(x1, x2, fill = y_smoothed)) +
 
 ########################################
 ########################################
-# 4- biased simulated field
-
+# 5- biased simulated field
 grid$y_bias <- grid$y + 0.5 # AW: in the paper I used 1
 
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_bias)) +
@@ -120,40 +158,33 @@ ggplot(grid) + geom_tile(aes(x1, x2, fill = y_bias)) +
 
 ########################################
 ########################################
-# 5- RF predicted field
-
+# 6- RF predicted field
 # make a RF model with a single tree (it is not equivalent to a regression tree)
-library(ranger)
 model <- ranger(y ~ x1 + x2 , data = grid, num.trees = 1)
 grid$y_RFpred <- predict(object = model, as.data.frame(grid))$predictions
 
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_RFpred)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
-library(DescTools)
 CCC(grid$y, grid$y_RFpred)$rho.c
 cor(grid$y, grid$y_RFpred)^2
 
+########################################
+########################################
+# 7- CART predicted field
 # make a regression tree model 
-library(rpart)
 model <- rpart(y ~ x1 + x2 , data = grid)
 grid$y_RTpred <- predict(object = model, grid)
 
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_RTpred)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
-library(DescTools)
-CCC(grid$y, grid$y_RTpred)$rho.c
-cor(grid$y, grid$y_RTpred)^2
-
-
 ########################################
 ########################################
-# 6- only high or low values from the mean
+# 8- upper quartile map
 # take the mean of the simulated field
 mean_ySim <- mean(grid$y)
 
-# TEST 1
 # take the values higher than the 75% quantile, otherwise return the mean
 grid$y_high <- NA
 for(i in 1:nrow(grid)){
@@ -163,11 +194,9 @@ for(i in 1:nrow(grid)){
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_high)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
-library(DescTools)
-CCC(grid$y, grid$y_high)$rho.c
-cor(grid$y, grid$y_high)^2
-
-# TEST 2
+########################################
+########################################
+# 9- lower quartile map
 # take the values lower than the 25% quantile, otherwise return the mean
 grid$y_low <- NA
 for(i in 1:nrow(grid)){
@@ -178,22 +207,25 @@ ggplot(grid) + geom_tile(aes(x1, x2, fill = y_low)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
 
+########################################
+########################################
+# convert the dataframe to a raster 
 ras2 <- grid 
 coordinates(ras2) <- ~x1+x2
 gridded(ras2) <- TRUE
 ras2 <- stack(ras2)
 names(ras2)[1] <- 'y_original'
 
-
-library(rasterVis)
-library(viridis)
-library(RColorBrewer)
+########################################
+########################################
+# plot
 miat = seq(0, 9, length.out = 100)
 myTheme <- rasterTheme(region = viridis(11),
                        strip.background = list(col = 'transparent'), 
                        axis.line = list(col = "transparent"),
                        layout.heights=list(xlab.key.padding = 1)) 
-pdf(file= './Simulated_case_maps.pdf',family="Palatino", width = 13, height = 6)             
+
+jpeg(file= './Simulated_case_maps.jpg',family="Palatino", width = 26, height = 12, units = "cm", res = 1200)            
 levelplot(ras2,
           at = miat,
           names.attr = c('Reference', 'Positional shift', 'Reversed', 'Mean', 'Smoothed', 'Negative bias', 
@@ -209,13 +241,45 @@ dev.off()
 ########################################
 ########################################
 # the sun diagram
-library(tdr)
-library(ggrepel)
-library(magrittr)
-library(latex2exp)
-library(viridis)
+
 source('./R_sun_function.R')
 source('./map_quality_indices.R')
+models <- list(y_rev = grid$y_rev,
+               y_posError = grid$y_posError,
+               y_mean = grid$y_mean,
+               y_smoothed = grid$y_smoothed, 
+               y_bias = grid$y_bias,
+               y_RFpred = grid$y_RFpred,
+               y_RTpred = grid$y_RTpred, 
+               y_high = grid$y_high, 
+               y_low = grid$y_low)
+names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative bias', 
+                   'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
+obser <- grid$y
+
+# additional values to be plotted as colour on the diagram, the MEC (NSE)
+model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
+colorval <- model_MEC
+
+jpeg(file= './Simulated_case_solar.jpg',family="Palatino", width = 25, height = 21, units = "cm", res = 1200)             
+gg_solar(mods = models, 
+         obs = obser,
+         colorval = colorval,
+         colorval.name = 'MEC',
+         label = TRUE, 
+         x.axis_begin = -1.1,
+         x.axis_end = 1.1,
+         y.axis_end = 1.9,
+         by = 0.1)
+dev.off()
+
+
+########################################
+########################################
+# the target diagram
+
+source('./R_target_function.R')
+
 models <- list(y_rev = grid$y_rev,
                y_posError = grid$y_posError,
                y_mean = grid$y_mean,
@@ -233,54 +297,11 @@ obser <- grid$y
 model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
 colorval <- model_MEC
 
-pdf(file= './Simulated_case_solar.pdf',family="Palatino", width = 12, height = 11)             
-gg_sun(mods = models, 
-       obs = obser,
-       colorval = colorval,
-       colorval.name = 'MEC',
-       label = TRUE, 
-       x.axis_begin = -1.1,
-       x.axis_end = 1.1,
-       y.axis_end = 1.9,
-       by = 0.1)
-dev.off()
-
-
-########################################
-########################################
-# the target diagram
-library(tdr)
-library(ggrepel)
-library(magrittr)
-library(latex2exp)
-library(viridis)
-source('./R_target_function.R')
-
-#AW: to be checked: the sign must be 1 or -1, otherise sd(obs)-sd(pred) has sign 0 for y_rev and y_rev is in the center because it has no bias
-models <- list(y_rev = grid$y_rev,
-               y_posError = grid$y_posError,
-               y_mean = grid$y_mean,
-               y_smoothed = grid$y_smoothed, 
-               y_bias = grid$y_bias,
-               y_RFpred = grid$y_RFpred,
-               y_RTpred = grid$y_RTpred, 
-               y_high = grid$y_high, 
-               y_low = grid$y_low)
-names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative bias', 
-                   'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
-obser <- grid$y
-
-# additional values to be plotted as colour on the diagram, the r
-model_cors <- plyr::laply(models, .fun = function(x,y){cor(x,y)}, y = grid$y)
-# account for possible sd=0 (mean field), then cor = 0
-model_cors[is.na(model_cors)] <- 0
-colorval <- model_cors
-
-pdf(file= './Simulated_case_target.pdf',family="Palatino", width = 13, height = 12)             
+jpeg(file= './Simulated_case_target.jpg', family="Palatino", width = 26, height = 24, units = "cm", res = 1200)             
 gg_target(mods = models, 
           obs = obser,
           colorval = colorval,
-          colorval.name = 'Correlation',
+          colorval.name = 'MEC',
           label = TRUE, 
           axis_begin  =-2.2,
           axis_end   = 2.2,
@@ -295,10 +316,8 @@ M1 <- sqrt(1+(1^2) -2*1^2)
 ########################################
 ########################################
 # the taylor diagram
-library(ggforce)
-library(ggrepel)
-library(latex2exp)
-source('R_taylor_function2.R')
+
+source('R_taylor_function.R')
 
 models <- list(y_rev = grid$y_rev,
                y_posError = grid$y_posError,
@@ -313,7 +332,7 @@ names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative
                    'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
 obser <- grid$y
 
-pdf(file= './Simulated_case_taylor.pdf',family="Palatino", width = 12, height = 7)             
+jpeg(file= './Simulated_case_taylor.jpg',family="Palatino", width = 24, height = 14, units = "cm", res = 1200)            
 gg_taylor(mods = models, 
           obs = obser, 
           label = TRUE)
