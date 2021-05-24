@@ -2,7 +2,7 @@
 Code and reproducible example for computing the Taylor, solar and target diagrams. 
 
 Based on the paper: 
-Wadoux A.M.J-C., D.J.J Walvoort, D.J, Brus (under review) An integrated approach for the evaluation of quantitative soil maps through Taylor and solar diagrams
+*Wadoux A.M.J-C., Walvoort D.J.J and Brus D.J. (2021) An integrated approach for the evaluation of quantitative soil maps through Taylor and solar diagrams* (under review in Geoderma)
 
 
 ## Simulation 
@@ -25,3 +25,53 @@ Wadoux A.M.J-C., D.J.J Walvoort, D.J, Brus (under review) An integrated approach
 9. a map of the lower quartile, made by assigning the mean of the reference map to the values higher than the lower quartile and the value of the reference map otherwise.
 
 ![alt text](Simulated_case_maps.jpg)
+
+## Taylor diagram
+
+```r
+# load function
+source('./R_Taylor_function.R')
+
+# make Target diagram
+gg_taylor(mods = models, 
+          obs = obser, 
+          label = TRUE)
+````
+![alt text](Simulated_case_taylor.jpg)
+
+## Solar diagram
+
+```r
+# load function
+source('./R_solar_function.R')
+
+# make solar diagram
+gg_solar(mods = models, 
+         obs = obser,
+         colorval = colorval,
+         colorval.name = 'MEC',
+         label = TRUE, 
+         x.axis_begin = -1.1,
+         x.axis_end = 1.1,
+         y.axis_end = 1.9,
+         by = 0.1)
+````
+![alt text](Simulated_case_solar.jpg)
+
+## Target diagram
+
+```r
+# load function
+source('./R_target_function.R')
+
+# make target diagram
+gg_target(mods = models, 
+          obs = obser,
+          colorval = colorval,
+          colorval.name = 'MEC',
+          label = TRUE, 
+          axis_begin  =-2.2,
+          axis_end   = 2.2,
+          by = 0.1)
+````
+![alt text](Simulated_case_target.jpg)
