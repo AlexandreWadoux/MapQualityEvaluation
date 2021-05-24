@@ -23,3 +23,5 @@ Wadoux A.M.J-C., D.J.J Walvoort, D.J, Brus (under review) An integrated approach
 7. a map predicted by a single regression tree with default parameters from the R package rpart using the reference map as calibration data and the x- and y-coordinates as predictors, 
 8. a map of the upper quartile, made by assigning the mean of the reference map to the values lower than the upper quartile and value of the reference map otherwise,
 9. a map of the lower quartile, made by assigning the mean of the reference map to the values higher than the lower quartile and the value of the reference map otherwise.
+
+![alt text](Simulated_case_maps.jpg)
