@@ -219,7 +219,7 @@ names(ras2)[1] <- 'y_original'
 ########################################
 ########################################
 # plot
-miat = seq(0, 9, length.out = 100)
+miat = seq(0, 6, length.out = 100)
 myTheme <- rasterTheme(region = viridis(11),
                        strip.background = list(col = 'transparent'), 
                        axis.line = list(col = "transparent"),
