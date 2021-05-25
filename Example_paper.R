@@ -2,6 +2,7 @@
 ############
 ############  load libraries
 ############
+
 library(ggplot2)
 library(ranger)
 library(rpart)
@@ -238,12 +239,15 @@ levelplot(ras2,
 dev.off()
 
 
-########################################
-########################################
-# the sun diagram
+############
+############  solar diagram
+############
 
+# load the functions
 source('./R_solar_function.R')
 source('./map_quality_indices.R')
+
+# make a list of vectors (map values)
 models <- list(y_rev = grid$y_rev,
                y_posError = grid$y_posError,
                y_mean = grid$y_mean,
@@ -253,8 +257,11 @@ models <- list(y_rev = grid$y_rev,
                y_RTpred = grid$y_RTpred, 
                y_high = grid$y_high, 
                y_low = grid$y_low)
+
 names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative bias', 
                    'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
+
+# vector of true values or observations
 obser <- grid$y
 
 # additional values to be plotted as colour on the diagram, the MEC (NSE)
@@ -274,12 +281,14 @@ gg_solar(mods = models,
 dev.off()
 
 
-########################################
-########################################
-# the target diagram
+############
+############  target diagram (jolliff et al. 2009)
+############
 
+# load the function
 source('./R_target_function.R')
 
+# make a list of vectors (map values)
 models <- list(y_rev = grid$y_rev,
                y_posError = grid$y_posError,
                y_mean = grid$y_mean,
@@ -291,9 +300,11 @@ models <- list(y_rev = grid$y_rev,
                y_low = grid$y_low)
 names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative bias', 
                    'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
+
+# vector of true values or observations
 obser <- grid$y
 
-# additional values to be plotted as colour on the diagram, the r
+# additional values to be plotted as colour on the diagram, the MEC
 model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
 colorval <- model_MEC
 
@@ -313,12 +324,14 @@ M07 <- sqrt(1+(0.7^2) -2*0.7^2)
 M1 <- sqrt(1+(1^2) -2*1^2)
 
 
-########################################
-########################################
-# the taylor diagram
+############
+############  Taylor diagram (Taylor, 2001)
+############
 
+# load the function
 source('R_taylor_function.R')
 
+# make a list of vectors (map values)
 models <- list(y_rev = grid$y_rev,
                y_posError = grid$y_posError,
                y_mean = grid$y_mean,
@@ -330,6 +343,8 @@ models <- list(y_rev = grid$y_rev,
                y_low = grid$y_low)
 names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative bias', 
                    'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
+
+# vector of true values or observations
 obser <- grid$y
 
 jpeg(file= './Simulated_case_taylor.jpg',family="Palatino", width = 24, height = 14, units = "cm", res = 3000)            
@@ -339,27 +354,38 @@ gg_taylor(mods = models,
 dev.off()
 
 
-##########################
-##########################
-# compute map quality indices
+############
+############  Map quality indices
+############
+
+# load the function
 source('map_quality_indices.R')
+
+# create a table and compute the indices
 tab.res <- plyr::laply(models, .fun = eval, y = obser)
 rownames(tab.res) <-  c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative bias', 
                         'Random forest', 'Regression tree', 'Upper quartile', 'Lower quartile' )
+# view the table
 tab.res
 
-##########################
-##########################
-# test: compute distance from reference point, see Eq 8 in Jollif et al., (2009)
+############
+############  Distance between reference and other points in the target diagram
+############
+
+# compute distance from reference point, see Eq 8 in Jolliff et al. (2009)
+
 # Calculate the statistics
 model_cors <- plyr::laply(models, .fun = cor, y = obser)
+
 # if cor = NA because of sd = 0 (when using the mean of the data as model), change to cor = 0, this is realistic, see discussion is Rstats
 model_cors[is.na(model_cors)] <- 0
 model_stds <- plyr::laply(models, .fun = sd)
-# normalize
+
+# standardize
 obs_std <- 1
 model_stds <- model_stds/sd(obser, na.rm = T)
 
+# store the results in a data frame
 data.frame(model = c('y_rev','y_posi', 'y_mean', 'y_smoothed', 'y_bias', 'y_RFpred', 'y_RTpred', 'y_high', 'y_low'), 
            distRefCenter = sqrt(1+model_stds^2 - 2*model_stds*model_cors))
 
