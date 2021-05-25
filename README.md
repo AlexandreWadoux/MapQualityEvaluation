@@ -70,8 +70,8 @@ gg_target(mods = models,
           colorval = colorval,
           colorval.name = 'MEC',
           label = TRUE, 
-          axis_begin  =-2.2,
-          axis_end   = 2.2,
+          axis_begin = -2.2,
+          axis_end = 2.2,
           by = 0.1)
 ````
 ![alt text](Simulated_case_target.jpg)
