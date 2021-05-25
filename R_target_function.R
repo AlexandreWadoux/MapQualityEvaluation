@@ -5,7 +5,8 @@ gg_target <- function(mods, obs, colorval = NULL, colorval.name = NULL, axis_beg
   
   # compute the standard deviation difference (sigma_d), Eq. 11 Jolliff et al., (2009) - X-axis first part
   model_sigmaD <- plyr::laply(mods, .fun = function(x, y){sign(sd(x) - sd(y))}, y = obs)
-  # to be checked, if sign not negative then assign 1 to zero
+  
+  # if sign not negative then assign 1 to zero
   model_sigmaD[model_sigmaD == 0] <- 1
   
   # compute the normalized unbiased RMSD, called (model_uRMSDnorm below) RMSD*' in Eq. 8 Jolliff et al., (2009) - X-axis second part
@@ -13,10 +14,10 @@ gg_target <- function(mods, obs, colorval = NULL, colorval.name = NULL, axis_beg
     # Eq. 2 Jolliff
     sigma_ast <- sd(x)/sd(y)
     corxy <- cor(x,y)
-    # account for possible sd=0 (mean field), then cor = 0
+    # account for possible sd = 0 (mean field), then cor = 0
     corxy[is.na(corxy)] <- 0
-    uRMSDnorm <- sqrt(1 + sigma_ast^2 - 2*sigma_ast*corxy)
-  }, y = obs)
+    uRMSDnorm <- sqrt(1 + sigma_ast^2 - 2*sigma_ast*corxy)}, 
+    y = obs)
   
   # additional values to be plotted as colour on the diagram, the r
   model_cors <- plyr::laply(mods, .fun = function(x,y){cor(x,y)}, y = obs)
@@ -38,7 +39,7 @@ gg_target <- function(mods, obs, colorval = NULL, colorval.name = NULL, axis_beg
   )
   
   # make circle at some cuts
-  ### AW: the cuts are determined based on the correlation, to be changed, see Jollief et al., (2009), Eq. 14
+  # the cuts are determined based on the correlation, to be changed, see Jollief et al., (2009), Eq. 14
   cuts = c(0.44, 0.71) 
   circle <- expand.grid(theta = seq(0, 2 * pi, length = 100), 
                         r = cuts)
@@ -110,16 +111,13 @@ gg_target <- function(mods, obs, colorval = NULL, colorval.name = NULL, axis_beg
     geom_text(data=lab_frame, aes(x=lab, y=zero, label=lab),vjust=1.5, size = 4) +
     geom_text(data=lab_frame, aes(x=zero, y=lab, label=lab),hjust=1.5, size = 4) + 
     geom_point(aes(fill = colvar), pch = 21, size = 7) +
-    
     ylab( TeX('$SDE^* \\cdot \\sign(\\sigma_d)') ) + 
     xlab(TeX('ME^*')) +                  
-    
     {if(label == TRUE)geom_label_repel(aes(label = model),
                                        box.padding   = 0.35, 
                                        point.padding = 0.5,
                                        segment.color = 'grey50', 
                                        size = 5)} + 
-    
     theme_classic() +
     theme(plot.margin=unit(c(1,1,1,1),"cm"))+
     labs(fill=colorval.name) +

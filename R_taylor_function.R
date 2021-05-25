@@ -33,26 +33,24 @@ gg_taylor <- function(mods, obs, label){
   ref_r = seq(ref_r_min,ref_r_max,length.out = ref_contours)
   
   x_star = array(0,dim=ref_contours)
-  x_star <- (ref_r^2 - max_R^2 - x_0^2)/(-2*x_0) # Null case
-  x_star[ref_r < (max_R-x_0) ] = x_0+ref_r[ref_r < (max_R-x_0) ] # Case when ref_r isn't larger than the circle
-  x_star[x_star<0]=NaN  # If x_star < 0, it doesn't intersect in positive quadrant
+  x_star <- (ref_r^2 - max_R^2 - x_0^2)/(-2*x_0) 
+  x_star[ref_r < (max_R-x_0) ] = x_0+ref_r[ref_r < (max_R-x_0) ] 
+  x_star[x_star<0]=NaN  
   
   # Now determine the y points where we intersect
   y_star=sqrt(ref_r^2-(x_star-x_0)^2)
-  y_star[ref_r < (max_R-x_0)]=0 # Case when ref_r isn't larger than the circle
+  y_star[ref_r < (max_R-x_0)]=0 
   
-  # The angle we end at depends on the location where x_star is
-  angle_end=pi/2-atan(y_star/((x_star-x_0)))  # default location x_star > x_0
+  angle_end=pi/2-atan(y_star/((x_star-x_0))) 
   angle_end[x_star < x_0] <- -pi/2+atan(y_star[x_star < x_0]/(x_0-x_star[x_star < x_0]))
   
-  #y_left <- sqrt(ref_r^2-x_0^2)
   
-  angle_begin <- -pi/2#+atan(y_left)
+  angle_begin <- -pi/2
   angle_begin[is.nan(angle_begin)] = -pi/2
   
-  small_arcs <- data.frame(angle_begin,angle_end,ref_r)# %>%
+  small_arcs <- data.frame(angle_begin,angle_end,ref_r)#
   
-  # sd concentriques autour de la reference
+  # standard deviation around the reference point
   maxray <- 1.5 * std_max
   discrete <- seq(180, 0, by = -1)
   dat.circle <- data.frame(xcircle = numeric(), ycircle = numeric(), label = numeric())
@@ -67,20 +65,19 @@ gg_taylor <- function(mods, obs, label){
   }
   F <- approxfun(x=semicircle_df[semicircle_df$label == max(semicircle_df$label),]$x, 
                  semicircle_df[semicircle_df$label == max(semicircle_df$label),]$y)
+  
   # remove the lines outside the plot
   for(i in 1:nrow(dat.circle)){
     if(dat.circle$ycircle[i] > F(dat.circle$xcircle[i]) | is.na(F(dat.circle$xcircle[i]))){
       dat.circle$ycircle[i] <- NA
-      dat.circle$xcircle[i] <- NA
-    }
-    
+      dat.circle$xcircle[i] <- NA}
   }    
+  
   # prepare labels
   dat.circle.labelc <- data.frame(xcircle = numeric(), ycircle = numeric(), label = numeric())
   for (i in unique(dat.circle$labelc)){
     dat.sub <- dat.circle[dat.circle$labelc == i,]
-    dat.circle.labelc <- rbind(dat.circle.labelc, dat.sub[10,])
-  }
+    dat.circle.labelc <- rbind(dat.circle.labelc, dat.sub[10,])}
   
   base_plot <- 
     ggplot() +
@@ -89,8 +86,6 @@ gg_taylor <- function(mods, obs, label){
     geom_line(data = semicircle_df, aes(x = x, y = y, group = label), linetype = "solid", colour = "black", size = 0.6) +
     scale_y_continuous(expand = expansion(mult = c(0, .1)))+
     scale_x_continuous(labels = abs)+
-    # geom_arc(aes(x0=x_0, y0=0, r=ref_r, start=angle_begin, end=angle_end),
-    #          data=small_arcs,linetype=2, colour = 'red')+ 
     geom_segment(data = lines_df, aes(x = 0, y = 0, xend = xend, yend = yend), linetype = "dashed", colour = "black") +
     geom_segment(data = lines_df, aes(x = min(xend), y = 0, xend = max(xend), yend = 0), colour = "black") +
     geom_line(data = dat.circle, aes(x = xcircle, y = ycircle, group = labelc), linetype = "dashed", colour = "red3", size = 0.6) +
@@ -116,7 +111,6 @@ gg_taylor <- function(mods, obs, label){
           panel.border = element_blank(),
           axis.line.x = element_blank(),
           panel.grid = element_blank())
-  
 }
 
 theme_taylor <- function(base_size = 11){
@@ -125,7 +119,7 @@ theme_taylor <- function(base_size = 11){
           axis.text.y = element_blank(),
           axis.title.y = element_blank(),
           panel.background = element_blank(),
-          text=element_text(size=16,  family="Palatino"),
+          text=element_text(size=16,  family = "Palatino"),
           panel.border = element_blank(),
           axis.line.x = element_blank(),
           panel.grid = element_blank())
