@@ -14,7 +14,7 @@ eval <- function(x, y){
     
     # coefficient of determination
     SSE <- sum((y - x) ^ 2, na.rm = T)
-    SST <- sum((y - mean(y, na.rm = T)) ^ 2, na.rm = T)
+    SST <- sum((x - mean(x, na.rm = T)) ^ 2, na.rm = T)
     NSE <- round((1 - SSE/SST), digits = 2)
     
     # concordance correlation coefficient
