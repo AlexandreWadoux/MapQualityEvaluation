@@ -12,9 +12,9 @@ eval <- function(x, y){
     # Pearson's correlation squared
     r2 <-  round((cor(x, y, method = 'pearson', use = 'pairwise.complete.obs')^2), digits = 2)
     
-    # coefficient of determination
+    # MEC
     SSE <- sum((y - x) ^ 2, na.rm = T)
-    SST <- sum((x - mean(x, na.rm = T)) ^ 2, na.rm = T)
+    SST <- sum((y - mean(y, na.rm = T)) ^ 2, na.rm = T)
     NSE <- round((1 - SSE/SST), digits = 2)
     
     # concordance correlation coefficient
