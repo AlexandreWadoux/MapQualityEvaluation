@@ -4,6 +4,10 @@ Code and reproducible example for computing the Taylor, solar and target diagram
 Based on the paper: 
 *Wadoux A.M.J-C., Walvoort D.J.J and Brus D.J. (2021) An integrated approach for the evaluation of quantitative soil maps through Taylor and solar diagrams* (under review in Geoderma)
 
+```diff
+To reproduce the figures below, run the file: "Example_paper.R"
+```
+
 
 ## Simulation 
 ### Reference field 
