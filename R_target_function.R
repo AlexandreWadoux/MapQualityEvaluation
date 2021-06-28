@@ -39,7 +39,7 @@ gg_target <- function(mods, obs, colorval = NULL, colorval.name = NULL, axis_beg
   )
   
   # make circle at some cuts
-  # the cuts are determined based on the correlation, to be changed, see Jollief et al., (2009), Eq. 14
+  # the cuts are determined based on the correlation, see Jollief et al., (2009), Eq. 14
   cuts = c(0.44, 0.71) 
   circle <- expand.grid(theta = seq(0, 2 * pi, length = 100), 
                         r = cuts)
@@ -56,7 +56,7 @@ gg_target <- function(mods, obs, colorval = NULL, colorval.name = NULL, axis_beg
   # labels of the semicircles
   radius <- unique(c(circle$r, unique(circle2$r)))
   labels <- data.frame(x = 0, y = -radius,
-                       lbs = c(0.9, 0.5, 1))
+                       lbs = c(0.9, 0.7, 1))
   labels$x[1] <- circle[circle$r == 0.44,]$x[37]
   labels$y[1] <- circle[circle$r == 0.44,]$y[37]
   labels$x[2] <- circle[circle$r == 0.71,]$x[37]

@@ -167,9 +167,6 @@ grid$y_RFpred <- predict(object = model, as.data.frame(grid))$predictions
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_RFpred)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
 
-CCC(grid$y, grid$y_RFpred)$rho.c
-cor(grid$y, grid$y_RFpred)^2
-
 ########################################
 ########################################
 # 7- CART predicted field
@@ -206,7 +203,6 @@ for(i in 1:nrow(grid)){
 
 ggplot(grid) + geom_tile(aes(x1, x2, fill = y_low)) +
   scale_fill_distiller(palette="Spectral") + theme_bw() + coord_fixed()
-
 
 ########################################
 ########################################
@@ -267,8 +263,8 @@ obser <- grid$y
 # additional values to be plotted as colour on the diagram, the MEC (NSE)
 model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
 colorval <- model_MEC
-
-jpeg(file= './Simulated_case_solar.jpg',family="Palatino", width = 25, height = 21, units = "cm", res = 3000)             
+ 
+jpeg(file= './Simulated_case_solar.jpg', family="Palatino", width = 25, height = 21, units = "cm", res = 2500)             
 gg_solar(mods = models, 
          obs = obser,
          colorval = colorval,
@@ -308,7 +304,7 @@ obser <- grid$y
 model_MEC <- plyr::laply(models, .fun = function(x,y){eval(x,y)$NSE}, y = grid$y)
 colorval <- model_MEC
 
-jpeg(file= './Simulated_case_target.jpg', family="Palatino", width = 26, height = 24, units = "cm", res = 3000)             
+jpeg(file= './Simulated_case_target.jpg', family="Palatino", width = 24, height = 22, units = "cm", res = 2500)             
 gg_target(mods = models, 
           obs = obser,
           colorval = colorval,
@@ -347,7 +343,7 @@ names(models) <- c('Reversed', 'Positional error', 'Mean', 'Smoothed', 'Negative
 # vector of true values or observations
 obser <- grid$y
 
-jpeg(file= './Simulated_case_taylor.jpg',family="Palatino", width = 24, height = 14, units = "cm", res = 3000)            
+jpeg(file= './Simulated_case_taylor.jpg', family="Palatino", width = 24, height = 14, units = "cm", res = 2500)            
 gg_taylor(mods = models, 
           obs = obser, 
           label = TRUE)

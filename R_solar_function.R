@@ -69,7 +69,7 @@ gg_solar <- function(mods, obs, colorval = NULL, colorval.name = NULL, x.axis_be
                                                                  y = x * sin(seq(0,pi,pi/1000)),
                                                                  label = x)})
   cuts = c(0.44, 0.71)
-  circle05 <- plyr::adply(cuts, 1, .fun = function(x){data.frame(x = x * cos(seq(0,pi,pi/1000)),
+  circle07 <- plyr::adply(cuts, 1, .fun = function(x){data.frame(x = x * cos(seq(0,pi,pi/1000)),
                                                                  y = x * sin(seq(0,pi,pi/1000)),
                                                                  label = x)})
   cuts = c(0.71, 1)
@@ -77,17 +77,17 @@ gg_solar <- function(mods, obs, colorval = NULL, colorval.name = NULL, x.axis_be
                                                                 y = x * sin(seq(0,pi,pi/1000)),
                                                                 label = x)})
   circle0$lab <- as.factor('r>0')
-  circle05$lab <- as.factor('r>0.5')
+  circle07$lab <- as.factor('r>0.7')
   circle09$lab <- as.factor('r>0.9')
   circle095$lab <- as.factor('r>0.95')
   
-  circ_pol <- rbind(circle0, circle05, circle09, circle095)
+  circ_pol <- rbind(circle0, circle07, circle09, circle095)
   
   # make the ggplot
   base.plot <- ggplot(data = data,  aes(x = nME, y = uRMSDnorm_sigmaD)) +
-    geom_polygon(data = circ_pol, aes(x, y, fill = lab)) + scale_fill_manual(values = c('r>0' = '#FEECA4','r>0.5' = '#FEF4B6', 'r>0.9' = '#FFFCD7', 'r>0.95'=  '#FFFFE5'),
+    geom_polygon(data = circ_pol, aes(x, y, fill = lab)) + scale_fill_manual(values = c('r>0' = '#FEECA4','r>0.7' = '#FEF4B6', 'r>0.9' = '#FFFCD7', 'r>0.95'=  '#FFFFE5'),
                                                                              name = '',
-                                                                             labels = expression(italic(r)>0,italic(r)>0.5, italic(r)>0.9, italic(r)>0.95))+
+                                                                             labels = expression(italic(r)>0,italic(r)>0.7, italic(r)>0.9, italic(r)>0.95))+
     geom_path(data = circle2, aes(x = x, y = y, group = label), colour = "black", size = 0.8) +
     geom_segment(x = 0, xend = 0, 
                  y = 0, yend = tail(y.lab_frame$lab, 1),
