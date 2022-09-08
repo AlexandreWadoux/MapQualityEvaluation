@@ -1,5 +1,5 @@
-eval <- function(x, y){
-
+eval <- function(predicted, observed){
+    x = predicted; y = observed
     # mean error
     ME <- round(mean(y - x, na.rm = TRUE), digits = 2)
     
